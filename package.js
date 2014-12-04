@@ -1,5 +1,5 @@
 Package.describe({
-  name: 'schnie:workers',
+  name: 'differential:workers',
   summary: 'Spawn headless worker meteor processes to work on async jobs',
   version: '0.0.1'
 });
