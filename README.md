@@ -42,3 +42,14 @@ Extend the `Job` class and implement the `handleJob` method.  Inside your job ha
 ### Logging
 `Job.log([agruments])`
 - This will `console.log` your arguments with a label prepended, denoting which process is being used.  (Master, PID 12001, PID 12002, etc)
+
+### Configuration
+Uses Meteor.settings API.
+````
+{
+  "workers": {
+    "amount": 2
+  }
+}
+````
+- This will set up 2 background workers.  If you are deploying to multiple servers, or servos (modulus), this will fire up 2 workers on each.
