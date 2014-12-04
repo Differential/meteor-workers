@@ -19,9 +19,9 @@ Job.push "load-retention",
 ````
 class @LoadRetentionJob extends Job
   handleJob: ->
-    @project = Project.findOne @job.projectId
+    project = Project.findOne @job.projectId
 
-  unless @project
+  unless project
     throw new Error "Project not found, could not load retention!"
 ````
 
@@ -33,11 +33,19 @@ Currently all methods are only available on the server.
 ##### Arguments
 - name - (String) Dash separated name of your job
 - job - (Object) The job parameters.  Will be available to the job handler.
-- options - (Object) - Optional. Monq parameters to be added to the job (delay, etc).
+- options - (Object) - Optional. [Monq](https://www.npmjs.org/package/monq) parameters to be added to the job (delay, etc).
 - callback (Function) - Optional. Callback to run after job has successfully been added to the queue.
 
 ### To handle a job:
-Extend the `Job` class and implement the `handleJob` method.  Inside your job handler `this.job` will be the hash that you passed in as the second parameter to `Job.push`.
+Extend the `Job` class and implement the `handleJob` method.  The class name must end with `Job` and be globally available.  Classes ending in `Job` are automatically registered to handle their corresponding jobs when they are dequeued.  "load-retention" will be handled by `LoadRetentionJob`.  Inside your job handler `this.job` will be the hash that you passed in as the second parameter to `Job.push`.  You can also run jobs on a cron schedule, rather than pushing them into the queue.  To do this, just implement a static method `setupCron(parser)` on your job class.  We use percolate-studio's [synced-cron](https://atmospherejs.com/percolatestudio/synced-cron) package for scheduling.  You will be passed a [later.js](http://bunkat.github.io/later) `parser` object as the only argument.
+````
+class @CleanUpJob extends Job
+  @setupCron: (parser) ->
+    parser.recur().on(0).hour()
+
+  handleJob: ->
+    doCleanUpStuff()
+````
 
 ### Logging
 `Job.log([agruments])`
