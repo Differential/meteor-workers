@@ -13,13 +13,16 @@ Package.onUse(function(api) {
 
   api.use([
     'coffeescript',
+    'mongo',
     'percolatestudio:synced-cron@1.0.0'
   ], 'server');
 
   api.addFiles([
-    'lib/init.coffee',
-    'lib/Job.coffee'
+    'collections/jobs.coffee',
+    'lib/Job.coffee',
+    'lib/init.coffee'
   ], 'server');
 
   api.export('Job', 'server');
+  api.export('Jobs', 'server');
 });
