@@ -56,8 +56,9 @@ Uses Meteor.settings API.
 ````
 {
   "workers": {
-    "amount": 2
+    "processes": 2,
+    "perProcess": 10
   }
 }
 ````
-- This will set up 2 background workers.  If you are deploying to multiple servers, or servos (modulus), this will fire up 2 workers on each.
+- This will set up 2 background worker processes.  If you are deploying to multiple servers, or servos (modulus), this will fire up 2 workers on each.  It will then start up 10 [Monq](https://www.npmjs.org/package/monq) workers on each process.
