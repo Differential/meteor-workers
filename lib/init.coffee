@@ -12,6 +12,10 @@ withJobs = (cb) ->
   _.each global, (val, key) ->
     cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
 
+getJobType = (str) ->
+  dashed = _.dasherize str
+  dashed.substring 1, dashed.indexOf "-job"
+
 
 Meteor.startup ->
 
@@ -42,7 +46,7 @@ Meteor.startup ->
     # on startup.  The last one to start up across all deployments
     # will spawn the the scheduler.
     Scheduler.update name: "scheduler",
-      $set: hostname: os.hostname(), pid: process.pid
+      $set: hostname: os.hostname()
     , upsert: true
 
 
@@ -57,7 +61,7 @@ Meteor.startup ->
       # If this process has been chosen
       if chosen.hostname is os.hostname()
         cluster.fork PORT: 0, WORKERS_SCHEDULER: true
-    , 5000
+    , 10000
 
   #
   # WORKER PROCESS
@@ -68,6 +72,7 @@ Meteor.startup ->
     if process.env.WORKERS_SCHEDULER
       withJobs (val, key) ->
         if global[key].setupCron?
+          jobType = getJobType key
           SyncedCron.add
             name: "#{key} (Cron)"
             schedule: global[key].setupCron
@@ -82,8 +87,7 @@ Meteor.startup ->
       # Look for classes that end in "Job" and register them
       # with the default handler (dispatcher)
       withJobs (val, key) ->
-        dashed = _.dasherize key
-        jobType = dashed.substring 1, dashed.indexOf "-job"
+        jobType = getJobType key
         handlers = {}
         handlers[jobType] = Meteor.bindEnvironment Job.handler
         _.each Job.workers, (worker) ->
