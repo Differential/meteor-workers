@@ -56,7 +56,14 @@ if cluster.isWorker
   # process.on "message", Meteor.bindEnvironment (job) ->
 
   # Static monq worker object
-  Job.worker = monq.worker ["jobs"]
+  Job.workers = []
+
+  addWorker = ->
+    Job.workers.push monq.worker ["jobs"]
+
+  workersPerProcess = Meteor.settings?.workers?.perProcess or 1
+  for worker in [1..workersPerProcess]
+    addWorker()
 
 
   # Generic job handler for all jobs

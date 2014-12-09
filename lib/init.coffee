@@ -34,7 +34,7 @@ Meteor.startup ->
     createProcess = ->
       proc = cluster.fork PORT: 0
 
-    workersToStart = Meteor.settings?.workers?.amount or 1
+    workersToStart = Meteor.settings?.workers?.processes or 1
     workersToStart++
     createProcess() for proc in [1..workersToStart]
 
@@ -73,7 +73,8 @@ Meteor.startup ->
           jobType = dashed.substring 1, dashed.indexOf "-job"
           handlers = {}
           handlers[jobType] = Meteor.bindEnvironment Job.handler
-          Job.worker.register handlers
+          _.each Job.workers, (worker) ->
+            worker.register handlers
 
           if isScheduler and global[key].setupCron?
             SyncedCron.add
@@ -87,10 +88,12 @@ Meteor.startup ->
         # Kick of cron job polling
         SyncedCron.options = log: false, utc: true
         SyncedCron.start()
-        Job.log "Started as job scheduler!"
+        Job.log "Started job scheduler!"
       else
         # Kick off polling
-        Job.worker.start()
-        Job.log "Started as job worker!"
+        _.each Job.workers, (worker, i) ->
+          worker.start()
+
+        Job.log "Started worker process with #{Job.workers.length} workers!"
 
     , 5000
