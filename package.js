@@ -1,7 +1,7 @@
 Package.describe({
   name: 'differential:workers',
   summary: 'Spawn headless worker meteor processes to work on async jobs',
-  version: '0.0.4'
+  version: '0.0.5'
 });
 
 Package.onUse(function(api) {
@@ -18,11 +18,11 @@ Package.onUse(function(api) {
   ], 'server');
 
   api.addFiles([
+    'collections/scheduler.coffee',
     'collections/jobs.coffee',
     'lib/Job.coffee',
     'lib/init.coffee'
   ], 'server');
 
-  api.export('Job', 'server');
-  api.export('Jobs', 'server');
+  api.export(['Scheduler', 'Job', 'Jobs'], 'server');
 });
