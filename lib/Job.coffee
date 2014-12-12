@@ -26,10 +26,7 @@ class Job
     if _.isFunction options
       callback = options
 
-    job._messageType = type
-    job._enqueued = new Date
-
-    defaultOptions = attempts: count: 10, delay: 15, strategy: "exponential"
+    defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
     options = _.extend defaultOptions, options
     @queue.enqueue type, job, options, callback or (error, job) ->
       if error
@@ -44,6 +41,9 @@ class Job
     args.unshift if cluster.isMaster then "MASTER:" else "PID #{process.pid}:"
     console.log.apply @, args
 
+  @getJobMetadata = (job) ->
+    Jobs.findOne params: job,
+      fields: params: false
 
 
 #
@@ -70,10 +70,12 @@ if cluster.isWorker
   # - Evaluates the job type specified in Job.push
   #   and instantiates an approriate handler and runs handleJob.
   Job.handler = (job, callback) ->
+    _ex = null
     try
       # Instantiate approprite job handler
-      className = "#{_.classify job._messageType}Job"
-      handler = new global[className](job)
+      meta = Job.getJobMetadata job
+      className = "#{_.classify meta.name}Job"
+      handler = new global[className](job, meta)
 
       # Before hook
       handler.beforeJob()
@@ -81,16 +83,17 @@ if cluster.isWorker
       # Handle the job
       result = handler.handleJob()
 
-      # After hook
-      handler.afterJob()
-
       # Forward results to monq callback
       callback null, result
 
-    catch error
-      Job.log error
-      handler.onError error, job
-      callback error
+    catch ex
+      _ex = ex
+      Job.log ex
+      callback ex
+
+    finally
+      # After hook
+      handler.afterJob _ex
 
   # Specific job classes should implement this
   # - Error handlers are fiber/meteor aware as usual
@@ -100,9 +103,8 @@ if cluster.isWorker
     throw new Error "Message handler not implemented!"
 
   # Sets the job up as 'this' inside job callbacks
-  Job::constructor = (@job) ->
+  Job::constructor = (@job, @metadata) ->
 
   # Default job lifecycle callbacks
   Job::beforeJob = ->
-  Job::afterJob = ->
-  Job::onError = ->
+  Job::afterJob = (exception) ->
