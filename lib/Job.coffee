@@ -22,9 +22,13 @@ class Job
   @queue: monq.queue "jobs"
 
   # Shared method to add to queue
-  @addJob: (type, job = {}, options, callback) ->
+  @push: (type, job = {}, options, callback) ->
     if _.isFunction options
       callback = options
+      options = null
+
+    if callback
+      callback = Meteor.bindEnvironment callback
 
     defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
     options = _.extend defaultOptions, options
@@ -32,9 +36,6 @@ class Job
       if error
         Job.log error
     error?
-
-  @push: (type, job, options, callback) ->
-    @addJob type, job, options, callback
 
   @log: ->
     args = _.values arguments
