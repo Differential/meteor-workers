@@ -10,6 +10,10 @@ cluster = Npm.require "cluster"
 os = Npm.require "os"
 monq = Npm.require("monq")(process.env.MONGO_URL)
 
+# Iterate over jobs
+withJobs = (cb) ->
+  _.each global, (val, key) ->
+    cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
 
 
 #
@@ -17,27 +21,38 @@ monq = Npm.require("monq")(process.env.MONGO_URL)
 # - Shared between master and worker processes
 #
 class Job
-
   # Interface for adding new jobs
   @queue: monq.queue "jobs"
 
-  # Shared method to add to queue
-  @push: (type, job = {}, options, callback) ->
+  # Static monq worker objects
+  @workers = []
+
+
+  constructor: (@params, @metadata) ->
+
+
+  @push: (job = new Job, options = {}, callback) ->
     if _.isFunction options
       callback = options
-      options = null
+      options = {}
 
     if callback
       callback = Meteor.bindEnvironment callback
-
-    job._workersId = Random.id()
+    else
+      callback = (error, job) ->
+        if error then Job.log "Error enqueing job:", error
+        error?
 
     defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
-    options = _.extend defaultOptions, options
-    @queue.enqueue type, job, options, callback or (error, job) ->
-      if error
-        Job.log error
-    error?
+    settingsOptions = Meteor.settings?.workers?.monq
+    options = _.extend defaultOptions, settingsOptions, options
+
+    className = job.constructor.name
+
+    job.params._workersId = Random.id()
+    params = job.params
+
+    @queue.enqueue className, params, options, callback
 
   @log: ->
     args = _.values arguments
@@ -49,37 +64,56 @@ class Job
       fields: params: false
 
 
-#
-# WORKER PROCESS
-# - Extend worker version of Job class and start polling
-#
-if cluster.isWorker
+  @initAsScheduler = ->
+    withJobs (val, key) ->
+      if global[key].setupCron?
+        SyncedCron.add
+          name: "#{key} (Cron)"
+          schedule: global[key].setupCron
+          job: -> Job.push key
 
-  # When a worker proc recieves IPC message from master
-  # process.on "message", Meteor.bindEnvironment (job) ->
+    # Kick of cron job polling
+    SyncedCron.options = log: false, utc: true
+    SyncedCron.start()
+    Job.log "Started job scheduler!"
 
-  # Static monq worker object
-  Job.workers = []
 
-  addWorker = ->
-    Job.workers.push monq.worker ["jobs"]
+  @initAsWorker = ->
+    # Load up workers
+    workersPerProcess = Meteor.settings?.workers?.perProcess or 1
+    for worker in [1..workersPerProcess]
+      Job.workers.push monq.worker ["jobs"]
 
-  workersPerProcess = Meteor.settings?.workers?.perProcess or 1
-  for worker in [1..workersPerProcess]
-    addWorker()
+    # Look for classes that end in "Job" and register them
+    # with the default handler (dispatcher)
+    withJobs (val, key) ->
+      handlers = {}
+      handlers[key] = Meteor.bindEnvironment Job.handler
+      _.each Job.workers, (worker) ->
+        worker.register handlers
+
+    # Stagger out polling on workers
+    _.each Job.workers, (worker, i) ->
+      Meteor.setTimeout ->
+        worker.start()
+      , 100 * i
+
+    Job.log "Started worker process with #{Job.workers.length} workers!"
+
 
 
   # Generic job handler for all jobs
   # - Evaluates the job type specified in Job.push
   #   and instantiates an approriate handler and runs handleJob.
-  Job.handler = (job, callback) ->
-    _ex = null
-    try
-      # Instantiate approprite job handler
-      meta = Job.getJobMetadata job._workersId
-      className = "#{_.classify meta.name}Job"
-      handler = new global[className](job, meta)
+  @handler = (job, callback) ->
+    # Instantiate approprite job handler
+    meta = Job.getJobMetadata job._workersId
+    className = meta.name
+    handler = new global[className](job, meta)
 
+    _ex = null
+
+    try
       # Before hook
       handler.beforeJob()
 
@@ -91,23 +125,21 @@ if cluster.isWorker
 
     catch ex
       _ex = ex
-      Job.log ex
+      Job.log "Error in #{className} handler:\n", _ex
       callback ex
 
     finally
       # After hook
       handler.afterJob _ex
 
+
   # Specific job classes should implement this
   # - Error handlers are fiber/meteor aware as usual
   # - Throw errors from handler if you cannot handle message for any reason
   # - Return value of handleJob will be put in the result hash on the job
-  Job::handleJob = ->
+  handleJob: ->
     throw new Error "Message handler not implemented!"
 
-  # Sets the job up as 'this' inside job callbacks
-  Job::constructor = (@job, @metadata) ->
-
-  # Default job lifecycle callbacks
-  Job::beforeJob = ->
-  Job::afterJob = (exception) ->
+  # Job lifecycle callbacks
+  beforeJob: ->
+  afterJob: (exception) ->

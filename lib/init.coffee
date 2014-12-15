@@ -7,16 +7,6 @@ cluster = Npm.require "cluster"
 os = Npm.require "os"
 
 
-# Iterate over jobs
-withJobs = (cb) ->
-  _.each global, (val, key) ->
-    cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
-
-getJobType = (str) ->
-  dashed = _.dasherize str
-  dashed.substring 1, dashed.indexOf "-job"
-
-
 Meteor.startup ->
 
   #
@@ -70,33 +60,6 @@ Meteor.startup ->
   if cluster.isWorker
 
     if process.env.WORKERS_SCHEDULER
-      withJobs (val, key) ->
-        if global[key].setupCron?
-          jobType = getJobType key
-          SyncedCron.add
-            name: "#{key} (Cron)"
-            schedule: global[key].setupCron
-            job: -> Job.push jobType
-
-      # Kick of cron job polling
-      SyncedCron.options = log: false, utc: true
-      SyncedCron.start()
-      Job.log "Started job scheduler!"
-
+      Job.initAsScheduler()
     else
-      # Look for classes that end in "Job" and register them
-      # with the default handler (dispatcher)
-      withJobs (val, key) ->
-        jobType = getJobType key
-        handlers = {}
-        handlers[jobType] = Meteor.bindEnvironment Job.handler
-        _.each Job.workers, (worker) ->
-          worker.register handlers
-
-      # Stagger out polling on workers
-      _.each Job.workers, (worker, i) ->
-        Meteor.setTimeout ->
-          worker.start()
-        , 100 * i
-
-      Job.log "Started worker process with #{Job.workers.length} workers!"
+      Job.initAsWorker()
