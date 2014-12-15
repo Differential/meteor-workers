@@ -87,6 +87,10 @@
     [
       "underscore",
       "1.0.1"
+    ],
+    [
+      "wizonesolutions:underscore-string",
+      "1.0.0"
     ]
   ],
   "pluginDependencies": [],

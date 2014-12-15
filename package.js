@@ -16,7 +16,8 @@ Package.onUse(function(api) {
     'coffeescript',
     'mongo',
     'random',
-    'percolatestudio:synced-cron@1.0.0'
+    'percolatestudio:synced-cron@1.0.0',
+    'wizonesolutions:underscore-string'
   ], 'server');
 
   api.addFiles([
