@@ -30,6 +30,8 @@ class Job
     if callback
       callback = Meteor.bindEnvironment callback
 
+    job._workersId = Random.id()
+
     defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
     options = _.extend defaultOptions, options
     @queue.enqueue type, job, options, callback or (error, job) ->
@@ -42,8 +44,8 @@ class Job
     args.unshift if cluster.isMaster then "MASTER:" else "PID #{process.pid}:"
     console.log.apply @, args
 
-  @getJobMetadata = (job) ->
-    Jobs.findOne params: job,
+  @getJobMetadata = (workersId) ->
+    Jobs.findOne "params._workersId": workersId,
       fields: params: false
 
 
@@ -74,7 +76,7 @@ if cluster.isWorker
     _ex = null
     try
       # Instantiate approprite job handler
-      meta = Job.getJobMetadata job
+      meta = Job.getJobMetadata job._workersId
       className = "#{_.classify meta.name}Job"
       handler = new global[className](job, meta)
 

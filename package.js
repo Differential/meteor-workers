@@ -1,7 +1,7 @@
 Package.describe({
   name: 'differential:workers',
   summary: 'Spawn headless worker meteor processes to work on async jobs',
-  version: '0.0.7',
+  version: '0.0.8',
   git: 'https://github.com/Differential/meteor-workers'
 });
 
@@ -15,6 +15,7 @@ Package.onUse(function(api) {
   api.use([
     'coffeescript',
     'mongo',
+    'random',
     'percolatestudio:synced-cron@1.0.0'
   ], 'server');
 
