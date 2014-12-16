@@ -10,7 +10,7 @@ This package lets you easily push jobs onto a mongo-backed queue and have them a
 ## Simple Usage
 ### Add a job
 ````
-Job.push new LoadRetentionJob
+Workers.push new LoadRetentionJob
   projectId: projectId
   cohortInterval: "day"
 ````
@@ -31,7 +31,7 @@ Currently all methods are only available on the server.
 ### To add a job:
 ````
 job = new LoadRetentionJob projectId: projectId
-Job.push (job, [options], [callback])
+Workers.push (job, [options], [callback])
 ````
 ##### Arguments
 - job - (Object) The job parameters.  Will be available to the job handler.
@@ -51,7 +51,7 @@ class @CleanUpJob extends Job
 You can also implement `afterJob` in your handler class.  If an error is thrown in your handler, it will be passed in as the only argument to this function, otherwise it will be `undefined`.
 
 ### Logging
-`Job.log([agruments])`
+`Workers.log([agruments])`
 - This will `console.log` your arguments with a label prepended, denoting which process is being used.  (Master, PID 12001, PID 12002, etc)
 
 ### Configuration
@@ -61,10 +61,15 @@ Uses Meteor.settings API.
   "workers": {
     "processes": 2,
     "perProcess": 10
+    "monq": {
+      // default monq parameters overrides
+    },
+    "cron": {
+      "log": false, // show SyncedCron logging
+      "disable": false, // disable cron scheduler (nice for debugging sometimes)
+      "startDelay": 60000 // delay for scheduler to assign itself
+    }
   },
-  "monq": {
-    // default monq parameters overrides
-  }
 }
 ````
 - This will set up 2 background worker processes.  If you are deploying to multiple servers, or servos (modulus), this will fire up 2 workers on each.  It will then start up 10 [Monq](https://www.npmjs.org/package/monq) workers on each process.

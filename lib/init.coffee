@@ -22,14 +22,13 @@ Meteor.startup ->
     count = Jobs.update status: "dequeued",
       $set: status: "queued"
     , multi: true
-    Job.log "Requeued #{count} jobs."
+    Workers.log "Requeued #{count} jobs."
+
 
     # Fork off worker processes
-    createProcess = ->
-      proc = cluster.fork PORT: 0
-
     workersToStart = Meteor.settings?.workers?.processes or 1
-    createProcess() for proc in [1..workersToStart]
+    for proc in [1..workersToStart]
+      cluster.fork PORT: 0
 
 
     # All master processes register themselves into a single document collection
@@ -54,7 +53,7 @@ Meteor.startup ->
           cluster.fork PORT: 0, WORKERS_SCHEDULER: true
       , Meteor.settings?.workers.cron?.startDelay or 60000
     else
-      Job.log "Scheduler is disabled."
+      Workers.log "Scheduler is disabled."
 
   #
   # WORKER PROCESS
@@ -63,6 +62,6 @@ Meteor.startup ->
   if cluster.isWorker
 
     if process.env.WORKERS_SCHEDULER
-      Job.initAsScheduler()
+      Workers.initAsScheduler()
     else
-      Job.initAsWorker()
+      Workers.initAsWorker()

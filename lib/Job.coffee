@@ -1,109 +1,19 @@
-# The purpose of this module is to:
-# - Create a Job class with an interface for pushing new jobs to a queue
-#   and handling those jobs when they are dequeued.
-
+# Abstract Job class for all actual jobs to subclass
 
 cluster = Npm.require "cluster"
-os = Npm.require "os"
-monq = Npm.require("monq")(process.env.MONGO_URL)
-
-# Iterate over jobs
-withJobs = (cb) ->
-  _.each global, (val, key) ->
-    cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
-
 
 #
 # Job Class
 # - Shared between master and worker processes
 #
 class Job
-  # Interface for adding new jobs
-  @queue: monq.queue "jobs"
-
-  # Static monq worker objects
-  @workers = []
-
 
   constructor: (@params = {}, @metadata) ->
 
 
-  @push: (job, options, callback) ->
-    if _.isFunction options
-      callback = options
-      options = {}
-
-    if callback
-      callback = Meteor.bindEnvironment callback
-    else
-      callback = (error, job) ->
-        if error then Job.log "Error enqueing job:", error
-        error?
-
-    defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
-    settingsOptions = Meteor.settings?.workers?.monq
-    options = _.extend defaultOptions, settingsOptions, options
-
-    className = job.constructor.name
-
-    job.params._workersId = Random.id()
-    params = job.params
-
-    @queue.enqueue className, params, options, callback
-
-  @log: ->
-    args = _.values arguments
-    args.unshift if cluster.isMaster then "MASTER:" else "PID #{process.pid}:"
-    console.log.apply @, args
-
-  @getJobMetadata = (workersId) ->
-    Jobs.findOne "params._workersId": workersId,
+  @getMetadata = (id) ->
+    Jobs.findOne "params._id": id,
       fields: params: false
-
-
-  @initAsScheduler = ->
-    withJobs (val, key) ->
-      if global[key].setupCron?
-
-        # Add a synced cron job to push our actual job
-        # onto the queue
-        SyncedCron.add
-          name: "#{key} (Cron)"
-          schedule: global[key].setupCron
-          job: -> Job.push new global[key]()
-
-    # Kick of cron job polling
-    SyncedCron.options =
-      log: Meteor.settings?.workers?.cron?.log
-      utc: true
-
-    SyncedCron.start()
-
-    Job.log "Started job scheduler!"
-
-
-  @initAsWorker = ->
-    # Load up workers
-    workersPerProcess = Meteor.settings?.workers?.perProcess or 1
-    for worker in [1..workersPerProcess]
-      Job.workers.push monq.worker ["jobs"]
-
-    # Look for classes that end in "Job" and register them
-    # with the default handler (dispatcher)
-    withJobs (val, key) ->
-      handlers = {}
-      handlers[key] = Meteor.bindEnvironment Job.handler
-      _.each Job.workers, (worker) ->
-        worker.register handlers
-
-    # Stagger out polling on workers
-    _.each Job.workers, (worker, i) ->
-      Meteor.setTimeout ->
-        worker.start()
-      , 100 * i
-
-    Job.log "Started worker process with #{Job.workers.length} workers!"
-
 
 
   # Generic job handler for all jobs
@@ -111,7 +21,7 @@ class Job
   #   and instantiates an approriate handler and runs handleJob.
   @handler = (job, callback) ->
     # Instantiate approprite job handler
-    meta = Job.getJobMetadata job._workersId
+    meta = Job.getMetadata job._id
     className = meta.name
     handler = new global[className](job, meta)
 
@@ -129,7 +39,7 @@ class Job
 
     catch ex
       _ex = ex
-      Job.log "Error in #{className} handler:\n", _ex
+      Workers.log "Error in #{className} handler:\n", _ex
       callback ex
 
     finally
