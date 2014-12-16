@@ -1,9 +1,6 @@
 # The purpose of this module is to:
 # - Create a Job class with an interface for pushing new jobs to a queue
-#   and handling those jobs when they are dequeued.  The job class
-#   is constructed differently depending on what type of process
-#   this code gets executed in (master, worker).
-
+#   and handling those jobs when they are dequeued.
 
 
 cluster = Npm.require "cluster"
@@ -28,10 +25,10 @@ class Job
   @workers = []
 
 
-  constructor: (@params, @metadata) ->
+  constructor: (@params = {}, @metadata) ->
 
 
-  @push: (job = new Job, options = {}, callback) ->
+  @push: (job, options, callback) ->
     if _.isFunction options
       callback = options
       options = {}
@@ -67,14 +64,21 @@ class Job
   @initAsScheduler = ->
     withJobs (val, key) ->
       if global[key].setupCron?
+
+        # Add a synced cron job to push our actual job
+        # onto the queue
         SyncedCron.add
           name: "#{key} (Cron)"
           schedule: global[key].setupCron
-          job: -> Job.push key
+          job: -> Job.push new global[key]()
 
     # Kick of cron job polling
-    SyncedCron.options = log: false, utc: true
+    SyncedCron.options =
+      log: Meteor.settings?.workers?.cron?.log
+      utc: true
+
     SyncedCron.start()
+
     Job.log "Started job scheduler!"
 
 

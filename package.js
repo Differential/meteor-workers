@@ -17,7 +17,7 @@ Package.onUse(function(api) {
     'mongo',
     'random',
     'percolatestudio:synced-cron@1.0.0',
-    'wizonesolutions:underscore-string'
+    'wizonesolutions:underscore-string@1.0.0'
   ], 'server');
 
   api.addFiles([

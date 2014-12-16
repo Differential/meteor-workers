@@ -43,15 +43,18 @@ Meteor.startup ->
     # May not be the best solution, but give some time for all
     # master processes across the deployment to start.
     # Then spwan a scheduler if this is the chosen master process.
-    Meteor.setTimeout ->
-      chosen = Scheduler.findOne()
-      unless chosen
-        throw new Error "Could not select a scheduler!"
+    unless Meteor.settings?.workers?.cron?.disable
+      Meteor.setTimeout ->
+        chosen = Scheduler.findOne()
+        unless chosen
+          throw new Error "Could not select a scheduler!"
 
-      # If this process has been chosen
-      if chosen.hostname is os.hostname()
-        cluster.fork PORT: 0, WORKERS_SCHEDULER: true
-    , 10000
+        # If this process has been chosen
+        if chosen.hostname is os.hostname()
+          cluster.fork PORT: 0, WORKERS_SCHEDULER: true
+      , Meteor.settings?.workers.cron?.startDelay or 60000
+    else
+      Job.log "Scheduler is disabled."
 
   #
   # WORKER PROCESS
