@@ -59,7 +59,7 @@ class Workers
         SyncedCron.add
           name: "#{key} (Cron)"
           schedule: global[key].setupCron
-          job: -> Job.push new global[key]()
+          job: -> Workers.push new global[key]()
 
     # Kick of cron job polling
     SyncedCron.options =
