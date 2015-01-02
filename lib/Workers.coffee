@@ -14,18 +14,6 @@ class Workers
   @workers = []
 
 
-  # Iterate over jobs
-  @withJobs = (cb) ->
-    _.each global, (val, key) ->
-      cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
-
-
-  @log: ->
-    args = _.values arguments
-    args.unshift if cluster.isMaster then "MASTER:" else "PID #{process.pid}:"
-    console.log.apply @, args
-
-
   @push: (job, options, callback) ->
     if _.isFunction options
       callback = options
@@ -35,7 +23,7 @@ class Workers
       callback = Meteor.bindEnvironment callback
     else
       callback = (error, job) ->
-        if error then Workers.log "Error enqueing job:", error
+        if error then WorkersUtil.log "Error enqueing job:", error
         error?
 
     defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
@@ -50,28 +38,7 @@ class Workers
     @queue.enqueue className, params, options, callback
 
 
-  @initAsScheduler = ->
-    @withJobs (val, key) ->
-      if global[key].setupCron?
-
-        # Add a synced cron job to push our actual job
-        # onto the queue
-        SyncedCron.add
-          name: "#{key} (Cron)"
-          schedule: global[key].setupCron
-          job: -> Workers.push new global[key]()
-
-    # Kick of cron job polling
-    SyncedCron.options =
-      log: Meteor.settings?.workers?.cron?.log
-      utc: true
-
-    SyncedCron.start()
-
-    Workers.log "Started job scheduler!"
-
-
-  @initAsWorker = ->
+  @init: ->
     # Load up workers
     workersPerProcess = Meteor.settings?.workers?.perProcess or 1
     for worker in [1..workersPerProcess]
@@ -79,16 +46,24 @@ class Workers
 
     # Look for classes that end in "Job" and register them
     # with the default handler (dispatcher)
-    @withJobs (val, key) ->
+    WorkersUtil.withJobs (val, key) ->
       handlers = {}
       handlers[key] = Meteor.bindEnvironment Job.handler
       _.each Workers.workers, (worker) ->
         worker.register handlers
+    WorkersUtil.log "Initialized worker process."
 
-    # Stagger out polling on workers
+
+  # Stagger out polling on workers
+  @start: ->
     _.each Workers.workers, (worker, i) ->
       Meteor.setTimeout ->
         worker.start()
       , 100 * i
+    WorkersUtil.log "Started #{Workers.workers.length} workers."
 
-    Workers.log "Started worker process with #{Workers.workers.length} workers!"
+
+  @stop: ->
+    _.each Workers.workers, (worker, i) ->
+      worker.stop()
+    WorkersUtil.log "Stopped #{Workers.workers.length} workers."

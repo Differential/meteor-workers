@@ -11,7 +11,7 @@ class Job
   constructor: (@params = {}, @metadata) ->
 
 
-  @getMetadata = (id) ->
+  @getMetadata: (id) ->
     Jobs.findOne "params._id": id,
       fields: params: false
 
@@ -19,7 +19,7 @@ class Job
   # Generic job handler for all jobs
   # - Evaluates the job type specified in Job.push
   #   and instantiates an approriate handler and runs handleJob.
-  @handler = (job, callback) ->
+  @handler: (job, callback) ->
     # Instantiate approprite job handler
     meta = Job.getMetadata job._id
     className = meta.name
@@ -39,7 +39,7 @@ class Job
 
     catch ex
       _ex = ex
-      Workers.log "Error in #{className} handler:\n", _ex
+      WorkersUtil.log "Error in #{className} handler:\n", _ex
       callback ex
 
     finally

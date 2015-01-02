@@ -51,7 +51,7 @@ class @CleanUpJob extends Job
 You can also implement `afterJob` in your handler class.  If an error is thrown in your handler, it will be passed in as the only argument to this function, otherwise it will be `undefined`.
 
 ### Logging
-`Workers.log([agruments])`
+`WorkersUtil.log([agruments])`
 - This will `console.log` your arguments with a label prepended, denoting which process is being used.  (Master, PID 12001, PID 12002, etc)
 
 ### Configuration

@@ -1,1 +1,1 @@
-Scheduler = new Mongo.Collection "scheduler"
+@SchedulerHelper = new Mongo.Collection "scheduler"

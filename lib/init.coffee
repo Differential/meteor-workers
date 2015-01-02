@@ -22,38 +22,24 @@ Meteor.startup ->
     count = Jobs.update status: "dequeued",
       $set: status: "queued"
     , multi: true
-    Workers.log "Requeued #{count} jobs."
-
-
-    # Fork off worker processes
-    workersToStart = Meteor.settings?.workers?.processes or 1
-    for proc in [1..workersToStart]
-      cluster.fork PORT: 0
+    WorkersUtil.log "Requeued #{count} jobs."
 
 
     # All master processes register themselves into a single document collection
     # on startup.  The last one to start up across all deployments
     # will spawn the the scheduler.
-    Scheduler.update name: "scheduler",
+    SchedulerHelper.update name: "scheduler",
       $set: hostname: os.hostname()
     , upsert: true
 
 
-    # May not be the best solution, but give some time for all
-    # master processes across the deployment to start.
-    # Then spwan a scheduler if this is the chosen master process.
-    unless Meteor.settings?.workers?.cron?.disable
-      Meteor.setTimeout ->
-        chosen = Scheduler.findOne()
-        unless chosen
-          throw new Error "Could not select a scheduler!"
-
-        # If this process has been chosen
-        if chosen.hostname is os.hostname()
-          cluster.fork PORT: 0, WORKERS_SCHEDULER: true
-      , Meteor.settings?.workers.cron?.startDelay or 60000
+    unless Meteor.settings?.workers?.disable
+      # Fork off worker processes
+      WorkersUtil.start()
     else
-      Workers.log "Scheduler is disabled."
+      WorkersUtil.log "Workers disabled."
+
+
 
   #
   # WORKER PROCESS
@@ -62,6 +48,12 @@ Meteor.startup ->
   if cluster.isWorker
 
     if process.env.WORKERS_SCHEDULER
-      Workers.initAsScheduler()
+      Scheduler.init()
+      Scheduler.start()
     else
-      Workers.initAsWorker()
+      Workers.init()
+      Workers.start()
+
+
+    process.on "message", (msg) ->
+      WorkersUtil.log msg
