@@ -50,15 +50,22 @@ class @CleanUpJob extends Job
 ````
 You can also implement `afterJob` in your handler class.  If an error is thrown in your handler, it will be passed in as the only argument to this function, otherwise it will be `undefined`.
 
-### Logging
+### Utility
 `WorkersUtil.log([agruments])`
 - This will `console.log` your arguments with a label prepended, denoting which process is being used.  (Master, PID 12001, PID 12002, etc)
+
+`WorkersUtil.start(workersToStart, startScheduler)`
+- Manually start the worker processes.
+
+`WorkersUtil.stop()`
+- Manually stop the worker processes.
 
 ### Configuration
 Uses Meteor.settings API.
 ````
 {
   "workers": {
+    "disable": false,
     "processes": 2,
     "perProcess": 10
     "monq": {
