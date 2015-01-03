@@ -1,9 +1,7 @@
-# Abstract Job class for all actual jobs to subclass
-
 cluster = Npm.require "cluster"
 
 #
-# Job Class
+# Abstract Job class for all actual jobs to subclass
 # - Shared between master and worker processes
 #
 class Job
@@ -39,7 +37,7 @@ class Job
 
     catch ex
       _ex = ex
-      WorkersUtil.log "Error in #{className} handler:\n", _ex
+      Workers.log "Error in #{className} handler:\n", _ex
       callback ex
 
     finally

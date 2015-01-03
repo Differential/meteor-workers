@@ -1,7 +1,7 @@
 class Scheduler
 
   @init: ->
-    WorkersUtil.withJobs (val, key) ->
+    Workers.withJobs (val, key) ->
       if global[key].setupCron?
 
         # Add a synced cron job to push our actual job
@@ -16,14 +16,14 @@ class Scheduler
       log: Meteor.settings?.workers?.cron?.log
       utc: true
 
-    WorkersUtil.log "Initalized job scheduler."
+    Workers.log "Initalized job scheduler."
 
 
   @start: ->
     SyncedCron.start()
-    WorkersUtil.log "Started job scheduler."
+    Workers.log "Started job scheduler."
 
 
   @stop: ->
     SyncedCron.stop()
-    WorkersUtil.log "Stopped job scheduler."
+    Workers.log "Stopped job scheduler."

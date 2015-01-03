@@ -11,34 +11,14 @@ Meteor.startup ->
 
   #
   # MASTER PROCESS
-  # - Fork off children and extend master version of Job clas
+  # - Fork off children
   #
   if cluster.isMaster
 
-    # If server(s) have been restarted, re-queue any dequeued jobs
-    # - These are likely jobs that were in the middle of processing
-    #   when the process was killed.
-    # XXX: Not fully tested, may require more thought
-    count = Jobs.update status: "dequeued",
-      $set: status: "queued"
-    , multi: true
-    WorkersUtil.log "Requeued #{count} jobs."
-
-
-    # All master processes register themselves into a single document collection
-    # on startup.  The last one to start up across all deployments
-    # will spawn the the scheduler.
-    SchedulerHelper.update name: "scheduler",
-      $set: hostname: os.hostname()
-    , upsert: true
-
-
     unless Meteor.settings?.workers?.disable
-      # Fork off worker processes
-      WorkersUtil.start()
+      Workers.start()
     else
-      WorkersUtil.log "Workers disabled."
-
+      Workers.log "Workers disabled."
 
 
   #
@@ -51,9 +31,5 @@ Meteor.startup ->
       Scheduler.init()
       Scheduler.start()
     else
-      Workers.init()
-      Workers.start()
-
-
-    process.on "message", (msg) ->
-      WorkersUtil.log msg
+      Worker.init()
+      Worker.start()

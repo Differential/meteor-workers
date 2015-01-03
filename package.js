@@ -23,12 +23,12 @@ Package.onUse(function(api) {
   api.addFiles([
     'collections/scheduler.coffee',
     'collections/jobs.coffee',
-    'lib/WorkersUtil.coffee',
-    'lib/Scheduler.coffee',
     'lib/Workers.coffee',
+    'lib/Worker.coffee',
+    'lib/Scheduler.coffee',
     'lib/Job.coffee',
     'lib/init.coffee'
   ], 'server');
 
-  api.export(['WorkersUtil', 'Workers', 'Scheduler', 'Job', 'Jobs'], 'server');
+  api.export(['Workers', 'Worker', 'Scheduler', 'Job', 'Jobs'], 'server');
 });
