@@ -6,7 +6,13 @@ class Worker
     # Load up workers
     workersPerProcess = Meteor.settings?.workers?.perProcess or 1
     for worker in [1..workersPerProcess]
-      Workers.workers.push monq.worker ["jobs"]
+      monqWorker = monq.worker ["jobs"]
+
+      monqWorker.on "complete", Meteor.bindEnvironment (data) ->
+        if Meteor.settings?.workers?.removeCompleted
+          Jobs.remove "params._id": data.params._id
+
+      Workers.workers.push monqWorker
 
     # Look for classes that end in "Job" and register them
     # with the default handler (dispatcher)

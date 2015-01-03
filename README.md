@@ -66,6 +66,7 @@ Uses Meteor.settings API.
 {
   "workers": {
     "disable": false,
+    "removeCompleted": false,
     "processes": 2,
     "perProcess": 10
     "monq": {
