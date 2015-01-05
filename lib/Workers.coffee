@@ -19,6 +19,14 @@ class Workers
       cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
 
 
+  @isMaster: ->
+    cluster.isMaster
+
+
+  @isWorker: ->
+    cluster.isWorker
+
+
   @log: ->
     args = _.values arguments
     args.unshift if cluster.isMaster then "MASTER:" else "PID #{process.pid}:"

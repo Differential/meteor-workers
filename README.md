@@ -54,6 +54,12 @@ You can also implement `afterJob` in your handler class.  If an error is thrown 
 `Workers.log([agruments])`
 - This will `console.log` your arguments with a label prepended, denoting which process is being used.  (Master, PID 12001, PID 12002, etc)
 
+`Workers.isMaster()`
+- Alias to `cluster.isMaster`
+
+`Workers.isWorker()`
+- Alias to `cluster.isWorker`
+
 `Workers.start(workersToStart, startScheduler)`
 - Manually start the worker processes.
 
