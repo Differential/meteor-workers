@@ -52,6 +52,8 @@ class Workers
     className = job.constructor.name
 
     job.params._id = Random.id()
+    job.params._className = className
+
     params = job.params
 
     @queue.enqueue className, params, options, callback

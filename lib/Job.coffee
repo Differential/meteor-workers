@@ -6,12 +6,7 @@ cluster = Npm.require "cluster"
 #
 class Job
 
-  constructor: (@params = {}, @metadata) ->
-
-
-  @getMetadata: (id) ->
-    Jobs.findOne "params._id": id,
-      fields: params: false
+  constructor: (@params = {}) ->
 
 
   # Generic job handler for all jobs
@@ -19,9 +14,8 @@ class Job
   #   and instantiates an approriate handler and runs handleJob.
   @handler: (job, callback) ->
     # Instantiate approprite job handler
-    meta = Job.getMetadata job._id
-    className = meta.name
-    handler = new global[className](job, meta)
+    className = job._className
+    handler = new global[className](job)
 
     _ex = null
 
@@ -44,7 +38,6 @@ class Job
       # After hook
       handler.afterJob _ex
 
-
   # Specific job classes should implement this
   # - Error handlers are fiber/meteor aware as usual
   # - Throw errors from handler if you cannot handle message for any reason
@@ -54,4 +47,10 @@ class Job
 
   # Job lifecycle callbacks
   beforeJob: ->
+
   afterJob: (exception) ->
+
+  # Get the monq related data
+  getMetadata: (id) ->
+    Jobs.findOne "params._id": id,
+      fields: params: false
