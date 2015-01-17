@@ -10,7 +10,7 @@ This package lets you easily push jobs onto a mongo-backed queue and have them a
 ## Simple Usage
 ### Add a job
 ````
-Workers.push new LoadRetentionJob
+Job.push new LoadRetentionJob
   projectId: projectId
   cohortInterval: "day"
 ````
@@ -31,7 +31,7 @@ Currently all methods are only available on the server.
 ### To add a job:
 ````
 job = new LoadRetentionJob projectId: projectId
-Workers.push (job, [options], [callback])
+Job.push (job, [options], [callback])
 ````
 ##### Arguments
 - job - (Object) The job parameters.  Will be available to the job handler.
@@ -50,38 +50,22 @@ class @CleanUpJob extends Job
 ````
 You can also implement `afterJob` in your handler class.  If an error is thrown in your handler, it will be passed in as the only argument to this function, otherwise it will be `undefined`.
 
-### Utility
-`Workers.log([agruments])`
-- This will `console.log` your arguments with a label prepended, denoting which process is being used.  (Master, PID 12001, PID 12002, etc)
-
-`Workers.isMaster()`
-- Alias to `cluster.isMaster`
-
-`Workers.isWorker()`
-- Alias to `cluster.isWorker`
-
-`Workers.start(workersToStart, startScheduler)`
-- Manually start the worker processes.
-
-`Workers.stop()`
-- Manually stop the worker processes.
 
 ### Configuration
 Uses Meteor.settings API.
 ````
 {
+  "cluster": {
+    "count": 2
+  },
   "workers": {
-    "disable": false,
-    "removeCompleted": false,
-    "processes": 2,
-    "perProcess": 10
+    "count": 10,
     "monq": {
       // default monq parameters overrides
     },
     "cron": {
       "log": false, // show SyncedCron logging
-      "disable": false, // disable cron scheduler (nice for debugging sometimes)
-      "startDelay": 60000 // delay for scheduler to assign itself
+      "disable": false // disable cron scheduler (nice for debugging sometimes)
     }
   },
 }

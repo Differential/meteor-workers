@@ -1,4 +1,5 @@
-cluster = Npm.require "cluster"
+Monq = Npm.require("monq")(process.env.MONGO_URL)
+queue = Monq.queue "jobs"
 
 #
 # Abstract Job class for all actual jobs to subclass
@@ -7,6 +8,32 @@ cluster = Npm.require "cluster"
 class Job
 
   constructor: (@params = {}) ->
+
+
+  @push = (job, options, callback) ->
+    if _.isFunction options
+      callback = options
+      options = {}
+
+    if callback
+      callback = Meteor.bindEnvironment callback
+    else
+      callback = (error, job) ->
+        if error then Workers.log "Error enqueing job:", error
+        error?
+
+    defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
+    settingsOptions = Meteor.settings?.workers?.monq
+    options = _.extend defaultOptions, settingsOptions, options
+
+    className = job.constructor.name
+
+    job.params._id = Random.id()
+    job.params._className = className
+
+    params = job.params
+
+    queue.enqueue className, params, options, callback
 
 
   # Generic job handler for all jobs
@@ -31,7 +58,7 @@ class Job
 
     catch ex
       _ex = ex
-      Workers.log "Error in #{className} handler:\n", _ex
+      Cluster.log "Error in #{className} handler:\n", _ex
       callback ex
 
     finally

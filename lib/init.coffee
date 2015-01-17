@@ -1,35 +1,51 @@
-# The purpose of this module is to:
-# - Fork off worker processes, running the same meteor app as master
-#   but do not handle any incoming requests.
-# - Start polling for new jobs in the worker processes.
+Monq = Npm.require("monq")(process.env.MONGO_URL)
 
-cluster = Npm.require "cluster"
-os = Npm.require "os"
+withJobs = (cb) ->
+  _.each global, (val, key) ->
+    cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
 
 
-Meteor.startup ->
+Cluster.startupMaster ->
+  count = Jobs.update status: "dequeued",
+    $set: status: "queued"
+  , multi: true
+  Cluster.log "Requeued #{count} jobs."
 
-  #
-  # MASTER PROCESS
-  # - Fork off children
-  #
-  if cluster.isMaster
+  unless Meteor.settings?.workers?.cron?.disable
+    SyncedCron.options =
+      log: Meteor.settings?.workers?.cron?.log
+      utc: true
+      collectionName: "scheduler"
 
-    unless Meteor.settings?.workers?.disable
-      Workers.start()
-    else
-      Workers.log "Workers disabled."
+    withJobs (val, key) ->
+      if global[key].setupCron?
+
+        SyncedCron.add
+          name: "#{key} (Cron)"
+          schedule: global[key].setupCron
+          job: ->
+            Job.push new global[key]
+
+    SyncedCron.start()
 
 
-  #
-  # WORKER PROCESS
-  # - Extend worker version of Job class and start polling
-  #
-  if cluster.isWorker
+Cluster.startupWorker ->
+  monqWorkers = Meteor.settings?.workers?.count or 1
+  i = 0
+  while i < monqWorkers
+    i++
+    Meteor.setTimeout ->
+      worker = Monq.worker ["jobs"]
 
-    if process.env.WORKERS_SCHEDULER
-      Scheduler.init()
-      Scheduler.start()
-    else
-      Worker.init()
-      Worker.start()
+      withJobs (val, key) ->
+        handlers = {}
+        handlers[key] = Meteor.bindEnvironment Job.handler
+        worker.register handlers
+
+      worker.on "complete", Meteor.bindEnvironment (data) ->
+        Jobs.remove "params._id": data.params._id
+
+      worker.start()
+    , 100 * i
+
+  Cluster.log "Started #{monqWorkers} monq workers."
