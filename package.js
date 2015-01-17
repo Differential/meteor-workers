@@ -16,7 +16,7 @@ Package.onUse(function(api) {
     'coffeescript',
     'mongo',
     'random',
-    'differential:cluster',
+    'differential:cluster@1.0.0',
     'percolatestudio:synced-cron@1.0.0',
     'wizonesolutions:underscore-string@1.0.0'
   ], 'server');
@@ -28,4 +28,5 @@ Package.onUse(function(api) {
   ], 'server');
 
   api.export(['Job', 'Jobs'], 'server');
+  api.imply('differential:cluster');
 });
