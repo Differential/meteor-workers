@@ -17,7 +17,7 @@ Package.onUse(function(api) {
     'mongo',
     'random',
     'differential:cluster@1.0.0',
-    'percolatestudio:synced-cron@1.0.0',
+    'percolate:synced-cron@1.1.1',
     'wizonesolutions:underscore-string@1.0.0'
   ], 'server');
 
