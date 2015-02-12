@@ -2,11 +2,11 @@ application-configuration@1.0.4
 base64@1.0.2
 binary-heap@1.0.2
 callback-hook@1.0.2
-check@1.0.3
+check@1.0.4
 coffeescript@1.0.5
-ddp@1.0.13
-differential:cluster@1.0.0
-differential:workers@2.0.0
+ddp@1.0.14
+differential:cluster@1.0.1
+differential:workers@2.0.1
 ejson@1.0.5
 follower-livedata@1.0.3
 geojson-utils@1.0.2
@@ -20,6 +20,6 @@ ordered-dict@1.0.2
 percolatestudio:synced-cron@1.0.0
 random@1.0.2
 retry@1.0.2
-tracker@1.0.4
+tracker@1.0.5
 underscore@1.0.2
 wizonesolutions:underscore-string@1.0.0
