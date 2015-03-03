@@ -22,7 +22,7 @@ class Job
         if error then Workers.log "Error enqueing job:", error
         error?
 
-    defaultOptions = attempts: count: 10, delay: 1000, strategy: "exponential"
+    defaultOptions = attempts: count: 10, delay: 10000, strategy: "exponential"
     settingsOptions = Meteor.settings?.workers?.monq
     options = _.extend defaultOptions, settingsOptions, options
 
