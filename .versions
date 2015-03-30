@@ -6,7 +6,7 @@ check@1.0.4
 coffeescript@1.0.5
 ddp@1.0.14
 differential:cluster@1.0.1
-differential:workers@2.0.1
+differential:workers@2.0.2
 ejson@1.0.5
 follower-livedata@1.0.3
 geojson-utils@1.0.2
