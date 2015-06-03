@@ -8,6 +8,11 @@ This package lets you easily push jobs onto a mongo-backed queue and have them a
 - Simple interface with minimal configuration and setup.
 
 ## Simple Usage
+### Install package
+```
+meteor add differential:workers
+```
+
 ### Add a job
 ````
 Job.push new LoadRetentionJob
