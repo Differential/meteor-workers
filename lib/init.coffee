@@ -2,7 +2,7 @@ Monq = Npm.require("monq")(process.env.MONGO_URL)
 
 withJobs = (cb) ->
   _.each global, (val, key) ->
-    cb(val, key) if _.endsWith(key, "Job") and key isnt "Job"
+    cb(val, key) if s.endsWith(key, "Job") and key isnt "Job"
 
 
 Cluster.startupMaster ->

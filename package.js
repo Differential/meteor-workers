@@ -18,7 +18,7 @@ Package.onUse(function(api) {
     'random',
     'differential:cluster@1.0.1',
     'percolate:synced-cron@1.1.1',
-    'wizonesolutions:underscore-string@1.0.0'
+    'underscorestring:underscore.string@3.2.2'
   ], 'server');
 
   api.addFiles([
