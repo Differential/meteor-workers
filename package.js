@@ -16,6 +16,7 @@ Package.onUse(function(api) {
     'coffeescript',
     'mongo',
     'random',
+    'underscore',
     'differential:cluster@1.0.1',
     'percolate:synced-cron@1.1.1',
     'underscorestring:underscore.string@3.2.2'
