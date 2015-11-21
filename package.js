@@ -9,7 +9,7 @@ Package.onUse(function(api) {
   api.versionsFrom('1.0');
 
   Npm.depends({
-    monq: '0.3.1'
+    monq: '0.3.3'
   });
 
   api.use([
