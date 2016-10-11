@@ -1,7 +1,7 @@
 Package.describe({
   name: 'differential:workers',
   summary: 'Spawn headless worker meteor processes to work on async jobs',
-  version: '2.0.6',
+  version: '2.0.7',
   git: 'https://github.com/Differential/meteor-workers'
 });
 
