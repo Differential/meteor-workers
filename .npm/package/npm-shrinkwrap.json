@@ -1,28 +1,51 @@
 {
   "dependencies": {
     "monq": {
-      "version": "0.3.1",
+      "version": "0.3.3",
       "dependencies": {
-        "mongoskin": {
-          "version": "1.4.4",
+        "mongodb": {
+          "version": "2.0.49",
           "dependencies": {
-            "mongodb": {
-              "version": "1.4.4",
+            "mongodb-core": {
+              "version": "1.2.24",
               "dependencies": {
                 "bson": {
-                  "version": "0.2.8",
-                  "dependencies": {
-                    "nan": {
-                      "version": "1.0.0"
-                    }
-                  }
+                  "version": "0.4.19"
+                }
+              }
+            },
+            "readable-stream": {
+              "version": "1.0.31",
+              "dependencies": {
+                "core-util-is": {
+                  "version": "1.0.2"
                 },
-                "kerberos": {
-                  "version": "0.0.3"
+                "isarray": {
+                  "version": "0.0.1"
+                },
+                "string_decoder": {
+                  "version": "0.10.31"
+                },
+                "inherits": {
+                  "version": "2.0.1"
+                }
+              }
+            },
+            "es6-promise": {
+              "version": "2.1.1"
+            },
+            "kerberos": {
+              "version": "0.0.17",
+              "dependencies": {
+                "nan": {
+                  "version": "2.0.9"
                 }
               }
             }
           }
+        },
+        "mongoskin": {
+          "version": "2.0.3"
         }
       }
     }
